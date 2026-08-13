@@ -1,17 +1,11 @@
 student = []
 
-sub1 = 0
-sub2 = 0
-sub3 = 0
-sub4 = 0
-sub5 = 0
-
 
 no = int(input("\n Enter The No Of Student : "))
 
 i = 0
 
-if no < 5:
+if no < 2:
     print("Give 5 Or More Student Only")
 else:
     for i in range(no):
