@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+</head>
+
+<body>
+    <form action="/add" method="post">
+        <table>
+            <thead>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Status</th>
+            </thead>
+            <tbody>
+                <td><input type="text" id="todo-id" name="todo-name"></td>
+                <td><input type="date" id="todo-date" name="todo-date"></td>
+                <td>
+                    <select name="todo-status" id="todo-status">
+                        <option value="progress" name="progress">Progress</option>
+                        <option value="active" name="active">Active</option>
+                        <option value="complite" name="complite">Complite</option>
+                    </select>
+                </td>
+            </tbody>
+        </table>
+        <button type="submit">Submit</button>
+    </form>
+    <br>
+    <form action="/get" method="get">
+        <button type="submit">
+            Show Todo
+        </button>
+    </form>
+    <br>
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Edit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in data %}
+            <tr>
+                <td>{{ i.id }}</td>
+                <td>{{ i.name }}</td>
+                <td>{{ i.due_date.strftime('%d-%m-%Y') }}</td>
+                <td>{{ i.status }}</td>
+                <td>
+                    <form action="/edit" method="get">
+                        <input type="hidden" name="id" value="{{ i.id }}">
+                        <button type="submit">Edit</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+
+</html>
