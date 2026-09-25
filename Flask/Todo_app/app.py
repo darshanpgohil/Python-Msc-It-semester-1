@@ -1,12 +1,15 @@
-from flask import Flask,render_template,request,redirect
+from flask import Flask,render_template,request,redirect,session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import json
+
 app = Flask(__name__)
 
+app.config['SECRET_KEY'] = "my-secret-key"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db=SQLAlchemy(app)
+db=SQLAlchemy(app)  
 print("Database Successfully Connected To Flask")
 
 class Todo(db.Model):
@@ -53,6 +56,10 @@ def add_todo():
           db.session.add(t1)
           db.session.commit()
           
+          session["todo_id"] = t1.id
+          session["todo_date"] = t1.name
+          session["todo_status"] = t1.status
+          
           return redirect("/")
       
 @app.route("/get",methods=['GET'])
@@ -78,6 +85,16 @@ def edit_todo():
         todo.due_date = datetime.strptime(request.form.get("todo-date"),"%Y-%m-%d")
         todo.status = request.form.get("todo-status")
 
+        db.session.commit()
+        
+        return redirect("/")
+    
+@app.route("/delete/<int:id>",methods=['DELETE'])
+def delete_todo(id):
+    todo = db.session.get(Todo,id)
+    
+    if todo:
+        db.session.delete(todo)
         db.session.commit()
         
         return redirect("/")
