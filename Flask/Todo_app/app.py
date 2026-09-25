@@ -3,8 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 app = Flask(__name__)
 
-
-
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -77,7 +75,7 @@ def edit_todo():
         todo = Todo.query.get(todo_id)
         
         todo.name = request.form.get("todo-name")
-        todo.due_date = datetime.strptime(request.form.get("todo-date"),"&Y-%m-%d")
+        todo.due_date = datetime.strptime(request.form.get("todo-date"),"%Y-%m-%d")
         todo.status = request.form.get("todo-status")
 
         db.session.commit()
