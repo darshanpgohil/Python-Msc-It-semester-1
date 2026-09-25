@@ -6,6 +6,34 @@
     <title>Edit Todo</title>
 </head>
 <body>
-    
+    <h2>Edit Todo</h2>
+
+    <form action="/edit" method="post">
+        <input type="hidden" name="id" value="{{ todo.id }}">
+        <label for="name">Name</label>
+        <input type="text" name="todo-name" value="{{ todo.name }}">
+
+        <label for="date">Date</label>
+        <input type="date" name="todo-date" value="{{ todo.due_date.strftime('%Y-%m-%d') }}">
+
+        <label for="status">Status</label>
+        <select name="todo-status" id="todo-status">
+            <option value="progress">
+                {% if todo.status == "progress" %}selected{% endif %}
+                Progress
+            </option>
+            <option value="active">
+                {% if todo.status == "active" %}selected
+                {% endif %}
+                Active
+            </option>
+            <option value="complite">
+                {% if todo.status == "complite" %}selected{% endif %}
+                Complite
+            </option>
+        </select>
+
+        <button type="submit">Update</button>
+    </form>
 </body>
 </html>
