@@ -12,22 +12,22 @@
         <table>
             <thead>
                 <tr>
-                <th>Name</th>
-                <th>Date</th>
-                <th>Status</th>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                <td><input type="text" id="todo-id" name="todo-name"></td>
-                <td><input type="date" id="todo-date" name="todo-date"></td>
-                <td>
-                    <select name="todo-status" id="todo-status">
-                        <option value="progress" name="progress">Progress</option>
-                        <option value="active" name="active">Active</option>
-                        <option value="complite" name="complite">Complite</option>
-                    </select>
-                </td>
+                    <td><input type="text" id="todo-id" name="todo-name"></td>
+                    <td><input type="date" id="todo-date" name="todo-date"></td>
+                    <td>
+                        <select name="todo-status" id="todo-status">
+                            <option value="progress" name="progress">Progress</option>
+                            <option value="active" name="active">Active</option>
+                            <option value="complite" name="complite">Complite</option>
+                        </select>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -48,6 +48,7 @@
                 <th>Date</th>
                 <th>Status</th>
                 <th>Edit</th>
+                <th>Delete</th>
             </tr>
         </thead>
         <tbody>
@@ -63,10 +64,30 @@
                         <button type="submit">Edit</button>
                     </form>
                 </td>
+                <td>
+                    <!-- <a href="{{ url_for('delete_todo',id=i.id) }}" style="text-decoration: none;color:black;">Delete</a> -->
+                    <button type="button" onclick="ondelete({{ i.id }})">
+                        Delete
+                    </button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <script>
+        function ondelete(id) {
+            fetch(`/delete/${id}`,
+                {
+                    method: "DELETE"
+                }
+            ).then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>
