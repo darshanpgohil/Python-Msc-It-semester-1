@@ -40,3 +40,7 @@ def create_task(task: Todo):
             "error": "somthing when wrong",
             "details": str(e)
             }
+
+@app.get("/get/")
+def show_todo():
+    return l
