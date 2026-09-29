@@ -44,3 +44,33 @@ def create_task(task: Todo):
 @app.get("/get/")
 def show_todo():
     return l
+
+@app.put("/update/{update_id}")
+def update_todo(update_id: int,task: Todo):
+    if update_id < 0 or update_id >= len(l):
+        return{
+            "error": "Update_id Is Invalid"
+        }
+
+    l[update_id]["name"] = task.name
+    l[update_id]["due_date"] = task.due_date
+    l[update_id]["status"] = task.status
+
+    return{
+        "details":"Record Updated Successfully Of {update_id}",
+        "data":l[update_id]
+    }
+
+@app.delete("/delete/{delete_id}")
+def delete_todo(delete_id: int,task: Todo):
+    if delete_id < 0 or delete_id >= len(l):
+        return{
+            "error": "Delete_id Is Invalid"
+        }
+
+    delete_data = l.pop(delete_id)
+
+    return{
+        "details": "Record Deleted Successfully",
+        "data": delete_data
+    }
