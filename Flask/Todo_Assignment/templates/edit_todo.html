@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Records</title>
+</head>
+<body>
+    <form action="/edit" method="post">
+        <div>
+            <input type="hidden" name="e_id" id="edit_id" value="{{ t1.id }}">
+        </div>
+        <div>
+            <label for="e_title">
+                Title
+            </label>
+            <input type="text" name="e_title" id="e_title" value="{{ t1.title }}">
+        </div>
+        <div>
+            <label for="e_description">
+                Description
+            </label>
+            <input type="text" name="e_description" id="e_description" value="{{ t1.description }}">
+        </div>
+        <div>
+            <label for="e_priority">Priority : </label>
+            <select name="e_priority" id="e-priority">
+                <option value="high" {% if t1.priority == "high" %}selected{% endif %}>High</option>
+                <option value="medium" {% if t1.priority == "medium" %}selected{% endif %}>Medium</option>
+                <option value="low" {% if t1.priority == "low" %}selected{% endif %}>Low</option>
+            </select>
+        </div>
+        <div>
+            <label for="e_is_completed">Is Complited : </label>
+            <select name="e_is_completed" id="e_is_completed">
+                <option value="True" {% if t1.is_complited == "True" %}selected{% endif %}>Completed</option>
+                <option value="False" {% if t1.is_complited == "False" %}selected{% endif %}>Pending</option>
+            </select>
+        </div>
+        <div>
+            <label for="e_due_date">Due Date : </label>
+            <input type="date" name="e_due_date" id="e_due_date" value="{{ t1.due_date }}">
+        </div>
+        <div>
+            <button type="submit">Submit</button>
+        </div>
+    </form>
+</body>
+</html>
