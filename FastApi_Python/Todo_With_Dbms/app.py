@@ -1,9 +1,9 @@
-from fastapi import FastAPI,Depends
+from fastapi import FastAPI,Depends,HTTPException
 from pydantic import BaseModel
 from datetime import date
 from sqlalchemy.orm import Session
 from database import engine,Base,get_db
-from model import Todo as TodoModel
+from model import Todo as TodoModel,User
 
 # l = []
 
@@ -15,6 +15,32 @@ class Todo(BaseModel):
     name: str
     due_date: date
     status: str
+
+@app.post("/signup")
+def signup_user(us: User,db: Session = Depends(get_db)):
+
+    try:
+        if us.username in newTask:
+            raise HTTPException(
+                status_code=400,
+                detail="User Already Exiest"
+            )
+
+        newTask = User(
+                username = us.username,
+                email = us.email,
+                password = us.password,
+                timestamp = us.timestamp
+            )
+
+        return {
+            "message":"User Created Successfully",
+            "user":us.username
+        }
+    except Exception as e:
+        return {
+            "message":str(e)
+        }
 
 @app.get("/")
 def read_root():
@@ -90,24 +116,11 @@ def edit_data(edit_id: int,task: Todo,db: Session = Depends(get_db)):
     
     return{
         "details":"Record Updated Successfully",
-        # "data": l[edit_id]
-        "data": todos 
+        "data": todos
     }
     
 @app.delete("/delete/{delete_id}")
 def delete_todo(delete_id: int,db: Session = Depends(get_db)):
-    # if delete_id < 0 or delete_id >= len(l):
-    #     return{
-    #         "error":"Deleted Id Is Wrong"
-    #     }
-        
-    # try:
-    #     deleted_record = l.pop(delete_id)
-    # except IndexError:
-    #     return{
-    #         "error":"Index Out Of Range"
-    #     }
-    
     todos = db.query(TodoModel).filter(
         TodoModel.id == delete_id
     ).first()
