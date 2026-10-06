@@ -16,3 +16,9 @@ class User(Base):
     email=Column(String, nullable=False)
     password=Column(String,nullable=False)
     timestamp=Column(DateTime, default=datetime.today, nullable=False)
+
+class LoginTrack(Base):
+    __tablename__ = "user_login"
+    id=Column(Integer, primary_key=True)
+    username=Column(String, nullable=False)
+    timestamp=Column(DateTime, default=datetime.today, nullable=False)

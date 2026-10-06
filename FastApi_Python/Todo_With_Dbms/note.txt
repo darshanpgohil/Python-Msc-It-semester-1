@@ -1,0 +1,14 @@
+get username and password
+if both are not empty
+username is in database or not?
+if yes
+    password = u.password
+
+return uid
+
+
+login success
+
+/get_profile
+
+tocken -> 1. access tocken 2. refresh tocken

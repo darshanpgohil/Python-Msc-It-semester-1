@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from datetime import date
 from sqlalchemy.orm import Session
 from database import engine,Base,get_db
-from model import Todo as TodoModel,User
+from model import Todo as TodoModel,User,LoginTrack
 
 # l = []
 
@@ -20,6 +20,10 @@ class UserSignup(BaseModel):
     username: str
     email: str
     password: str
+
+class UserLogin(BaseModel):
+    username:str
+    password:str
 
 @app.get("/")
 def read_root():
@@ -51,6 +55,38 @@ def signup_todo(us: UserSignup, db: Session = Depends(get_db)):
         "message":"User Created Successfully",
         "user": us.username
     }
+
+@app.post("/login")
+def todo_login(ul: UserLogin, db: Session=Depends(get_db)):
+    print("login")
+    print(ul.username)
+    print(ul.password)
+    if not (ul.username == "" and ul.password == ""):
+
+        l_user=db.query(User).filter(ul.username == User.username and ul.password == User.password).first()
+        # l_pass=db.query(User).filter(ul.password == User.password).first()
+        
+        if  l_user:
+            userLog = LoginTrack(
+            username=ul.username,
+            )
+
+            db.add(userLog)
+            db.commit()
+            db.refresh(userLog)
+
+            return{
+                "detail": "User Login SuccessFully"
+            }
+        else:
+            return{
+                "error": "Invalid Credential"
+            }
+    else:
+        return{
+            "error": "Username or Password are Empty"
+        }
+    
 
 @app.get("/items/{item_id}")
 def get_item_id(item_id: int,user_id: int):
