@@ -1,13 +1,21 @@
 from fastapi import FastAPI,Depends,HTTPException
 from pydantic import BaseModel
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from database import engine,Base,get_db
 from model import Todo as TodoModel,User,LoginTrack
-
-# l = []
+import jwt
+import secrets
+from fastapi.security import OAuth2PasswordBearer
 
 app = FastAPI()
+
+
+SECRETE_KEY = secrets.token_urlsafe(32)
+ALGORITHM="HS256"
+TOKEN_EXPIRE_MINUTES = 30
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login") 
 
 Base.metadata.create_all(bind=engine)
 
@@ -63,8 +71,10 @@ def todo_login(ul: UserLogin, db: Session=Depends(get_db)):
     print(ul.password)
     if not (ul.username == "" and ul.password == ""):
 
-        l_user=db.query(User).filter(ul.username == User.username and ul.password == User.password).first()
-        # l_pass=db.query(User).filter(ul.password == User.password).first()
+        l_user=db.query(User).filter(
+            User.username == ul.username,
+            User.password == ul.password
+        ).first()
         
         if  l_user:
             userLog = LoginTrack(
@@ -74,8 +84,24 @@ def todo_login(ul: UserLogin, db: Session=Depends(get_db)):
             db.add(userLog)
             db.commit()
             db.refresh(userLog)
+            
+            expire = datetime.now(timezone.utc) + timedelta(
+                minutes = TOKEN_EXPIRE_MINUTES
+            )
+            
+            payload = {
+                "name": l_user.username,
+                "exp": expire
+            }
+            
+            TOKEN = jwt.encode(
+                payload,
+                SECRETE_KEY,
+                algorithm=ALGORITHM
+            )
 
             return{
+                "access_tocken": TOKEN,
                 "detail": "User Login SuccessFully"
             }
         else:
@@ -86,7 +112,40 @@ def todo_login(ul: UserLogin, db: Session=Depends(get_db)):
         return{
             "error": "Username or Password are Empty"
         }
+
+def validate_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(
+            token,
+            SECRETE_KEY,
+            algorithm=[ALGORITHM]
+        )
+        
+        username = payload.get("name")
+        
+        if username is None:
+            HTTPException(
+                status_code=401,
+                detail="Invalid tocken"
+            )
+            
+        user = User.get(username)
+        
+        if user is None:
+            HTTPException(
+                status_code=401,
+                detail="User Not Found"
+            )
+            
+        return user
+    except :
+        pass
     
+@app.get("/profile")
+def user_profile(
+    current_user: dict = Depends(validate_user)
+):
+    pass
 
 @app.get("/items/{item_id}")
 def get_item_id(item_id: int,user_id: int):
@@ -127,19 +186,9 @@ def create_task(task: Todo,db: Session = Depends(get_db)):
 def show_todo(db: Session = Depends(get_db)):
     todos = db.query(TodoModel).all()
     return todos
-    # return l
 
 @app.put("/update/{edit_id}")
 def edit_data(edit_id: int,task: Todo,db: Session = Depends(get_db)):
-    # if edit_id < 0 or edit_id >= len(l):
-    #     return{
-    #         "error":"Edit_id Is Wrong Given"
-    #     }
-    
-    # l[edit_id]["name"] = task.name
-    # l[edit_id]["due_date"] = task.due_date
-    # l[edit_id]["status"] = task.status
-    
     todos = db.query(TodoModel).filter(
         TodoModel.id == edit_id
     ).first()
