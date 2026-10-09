@@ -5,13 +5,17 @@ from sqlalchemy.orm import Session
 from database import engine,Base,get_db
 from model import Todo as TodoModel,User,LoginTrack
 import jwt
-import secrets
+from dotenv import load_dotenv
+# import secrets
+import os
 from fastapi.security import OAuth2PasswordBearer
 
 app = FastAPI()
 
+load_dotenv()
 
-SECRETE_KEY = secrets.token_urlsafe(32)
+# SECRETE_KEY = secrets.token_urlsafe(32)
+SECRETE_KEY = os.getenv("SECRET_KEY")
 ALGORITHM="HS256"
 TOKEN_EXPIRE_MINUTES = 30
 
