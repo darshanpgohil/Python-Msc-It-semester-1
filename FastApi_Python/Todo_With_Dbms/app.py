@@ -122,21 +122,23 @@ def validate_user(token: str = Depends(oauth2_scheme)):
         payload = jwt.decode(
             token,
             SECRETE_KEY,
-            algorithm=[ALGORITHM]
+            algorithms=[ALGORITHM]
         )
         
         username = payload.get("name")
         
         if username is None:
-            HTTPException(
+            raise HTTPException(
                 status_code=401,
                 detail="Invalid tocken"
             )
             
-        user = User.get(username)
+        user = db.query(User).filter(
+            User.username == username
+        ).first()
         
         if user is None:
-            HTTPException(
+            raise HTTPException(
                 status_code=401,
                 detail="User Not Found"
             )
@@ -149,7 +151,10 @@ def validate_user(token: str = Depends(oauth2_scheme)):
 def user_profile(
     current_user: dict = Depends(validate_user)
 ):
-    pass
+    return{
+        "message": "Authentication Successfully",
+        "name": current_user["username"]
+    }
 
 @app.get("/items/{item_id}")
 def get_item_id(item_id: int,user_id: int):
@@ -200,7 +205,7 @@ def edit_data(edit_id: int,task: Todo,db: Session = Depends(get_db)):
     if todos == None:
         return{
             "error":"Updeted Id Not Exiest"
-        }    
+        }
         
     todos.name = task.name
     todos.due_date = task.due_date
