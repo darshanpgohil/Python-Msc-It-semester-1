@@ -68,92 +68,111 @@ def signup_todo(us: UserSignup, db: Session = Depends(get_db)):
         "user": us.username
     }
 
-@app.post("/login")
-def todo_login(ul: UserLogin, db: Session=Depends(get_db)):
-    print("login")
-    print(ul.username)
-    print(ul.password)
-    if not (ul.username == "" and ul.password == ""):
 
-        l_user=db.query(User).filter(
+@app.post("/login")
+def todo_login(ul: UserLogin, db: Session = Depends(get_db)):
+
+    if ul.username and ul.password:
+
+        l_user = db.query(User).filter(
             User.username == ul.username,
             User.password == ul.password
         ).first()
-        
-        if  l_user:
+
+        if l_user:
+
             userLog = LoginTrack(
-            username=ul.username,
+                username=ul.username
             )
 
             db.add(userLog)
             db.commit()
             db.refresh(userLog)
-            
+
             expire = datetime.now(timezone.utc) + timedelta(
-                minutes = TOKEN_EXPIRE_MINUTES
+                minutes=TOKEN_EXPIRE_MINUTES
             )
-            
+
             payload = {
                 "name": l_user.username,
                 "exp": expire
             }
-            
+
             TOKEN = jwt.encode(
                 payload,
                 SECRETE_KEY,
                 algorithm=ALGORITHM
             )
 
-            return{
-                "access_tocken": TOKEN,
-                "detail": "User Login SuccessFully"
+            return {
+                "access_token": TOKEN,
+                "token_type": "bearer",
+                "detail": "User Login Successfully"
             }
-        else:
-            return{
-                "error": "Invalid Credential"
-            }
-    else:
-        return{
-            "error": "Username or Password are Empty"
-        }
 
-def validate_user(token: str = Depends(oauth2_scheme)):
+        else:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid Credentials"
+            )
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Username or Password are Empty"
+        )
+
+
+def validate_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
     try:
         payload = jwt.decode(
             token,
             SECRETE_KEY,
             algorithms=[ALGORITHM]
         )
-        
+
         username = payload.get("name")
-        
+
         if username is None:
             raise HTTPException(
                 status_code=401,
-                detail="Invalid tocken"
+                detail="Invalid token"
             )
-            
+
         user = db.query(User).filter(
             User.username == username
         ).first()
-        
+
         if user is None:
             raise HTTPException(
                 status_code=401,
                 detail="User Not Found"
             )
-            
+
         return user
-    except :
-        pass
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=401,
+            detail="Token has Expired"
+        )
+
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Token"
+        )
     
 @app.get("/profile")
 def user_profile(
-    current_user: dict = Depends(validate_user)
+    current_user: User = Depends(validate_user)
 ):
-    return{
-        "message": "Authentication Successfully",
-        "name": current_user["username"]
+    return {
+        "username": current_user.username,
+        "email": current_user.email
     }
 
 @app.get("/items/{item_id}")
