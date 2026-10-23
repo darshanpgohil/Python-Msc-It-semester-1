@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Task - Task Tracker</title>
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: #f1f5f9;
+            color: #0f172a;
+            font-family: Arial, sans-serif;
+        }
+        .card {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 28px;
+            border-radius: 14px;
+            box-shadow: 0 8px 30px #0f172a12;
+        }
+        label { display: block; margin: 15px 0 7px; }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font: inherit;
+        }
+        textarea { min-height: 100px; }
+        button, .back {
+            display: inline-block;
+            padding: 11px 15px;
+            border: 0;
+            border-radius: 8px;
+            background: #4f46e5;
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            margin-top: 18px;
+        }
+        .back { background: #64748b; }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <h1>✏️ Edit Task</h1>
+        <p>Logged in as {{ username }}</p>
+
+        <form action="/update/{{ task.id }}" method="post">
+            <label for="title">Task title</label>
+            <input
+                id="title"
+                name="title"
+                maxlength="150"
+                value="{{ task.title }}"
+                required
+            >
+
+            <label for="description">Description</label>
+            <textarea
+                id="description"
+                name="description"
+                maxlength="300"
+            >{{ task.description or '' }}</textarea>
+
+            <label for="priority">Priority</label>
+            <select id="priority" name="priority">
+                <option value="High" {% if task.priority == 'High' %}selected{% endif %}>High</option>
+                <option value="Medium" {% if task.priority == 'Medium' %}selected{% endif %}>Medium</option>
+                <option value="Low" {% if task.priority == 'Low' %}selected{% endif %}>Low</option>
+            </select>
+
+            <button type="submit">Save Changes</button>
+            <a class="back" href="/">Cancel</a>
+        </form>
+    </main>
+</body>
+</html>

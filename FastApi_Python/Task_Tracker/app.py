@@ -1,10 +1,10 @@
-from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi import FastAPI, Request, Depends, Form,HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import create_engine,Column,Integer,String,Boolean,Date
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
-from datetime import datetime
+from datetime import date,datetime
 
 app = FastAPI()
 
@@ -40,7 +40,7 @@ class Task(Base):
     priority = Column(String(20), default=None)
     is_completed = Column(Boolean, default=False)
     created_by = Column(String(100), nullable=False)
-    due_date = Column(Date, default=datetime.now)
+    due_date = Column(Date, default=date.today)
     
 Base.metadata.create_all(bind=engine)
 
@@ -73,7 +73,7 @@ def get_username(request: Request):
 def get_user_task(task_id:int, username: str, db: Session):
     task = db.query(Task).filter(
         Task.id == task_id,
-        Task.username == username
+        Task.created_by == username
     ).first()
     
     if task is None:
@@ -98,7 +98,7 @@ def home(request:Request, db: Session = Depends(get_db)):
     pending_task = [t for t in tasks if not t.is_completed]
     complited_task = [t for t in tasks if t.is_completed]
     
-    theme = request.cookie.get("theme", "light")
+    theme = request.cookies.get("theme", "light")
     
     if theme not in ("light","dark"):
         theme = "light"
@@ -113,3 +113,196 @@ def home(request:Request, db: Session = Depends(get_db)):
             "theme": theme
         }
     )
+    
+@app.get("/login")
+def login_page(request: Request):
+    if request.session.get("username"):
+        return RedirectResponse("/",status_code=303)
+        
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={"error":None}
+    )
+    
+@app.post("/login")
+def login(
+    request: Request,
+    username: str = Form(...)
+):
+    username = username.strip()
+    
+    if not username or len(username) > 100:
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            context={"error":"Enter Name Up to 100 Character"},
+            status_code=400
+        )
+        
+    request.session.clear()
+    request.session["username"] = username
+    
+    return RedirectResponse("/",status_code=303)
+
+@app.post("/add")
+def add_task(
+    request: Request,
+    title: str = Form(...),
+    description: str = Form(...),
+    priority: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    username = get_username(request)
+    
+    title = title.strip()
+    description = description.strip()
+    
+    if not title or len(title) > 150:
+        raise HTTPException(
+            status_code=400,
+            detail="title must contain 1 to 150 Character"
+        )    
+        
+    if len(description) > 300:
+        raise HTTPException(
+            status_code=400,
+            detail="Description can not exceed 300 character"
+        )
+        
+    if priority not in ("High", "Medium", "Low"):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid Priority"
+        )
+        
+    task = Task(
+        title=title,
+        description=description,
+        priority=priority,
+        is_completed=False,
+        created_by=username,
+        due_date=date.today()    
+    )
+    
+    db.add(task)
+    db.commit()
+    
+    return RedirectResponse("/",status_code=303)
+
+@app.get("/toggle/{id}")
+def toggle_task(
+    id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    username = get_username(request)
+    task = get_user_task(id, username, db)
+    
+    task.is_completed = not task.is_completed
+    db.commit()
+    
+    return RedirectResponse("/",status_code=303)
+
+@app.get("/edit/{id}")
+def edit_task(
+    id: int,
+    request: Request,
+    db: Session= Depends(get_db)
+):
+    username = get_username(request)
+    task = get_user_task(id, username, db)
+    
+    return templates.TemplateResponse(
+        request=request,
+        name="edit.html",
+        context={ "task": task, "username": username}
+    )
+    
+@app.post("/update/{id}")
+def update_task(
+    id: int,
+    request: Request,
+    title: str = Form(...),
+    description: str = Form(...),
+    priority: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    username = get_username(request)
+    task = get_user_task(id,username,db)
+    
+    title = title.strip()
+    description = description.strip()
+    
+    if not title or len(title) > 150:
+        raise HTTPException(
+            status_code=400,
+            detail="title can must contain 1-150 character"
+        )
+        
+    if len(description) > 300:
+        raise HTTPException(
+            status_code=400,
+            detail="description cannot exceed 300 characters"
+        )
+        
+    if priority not in ("High", "Medium", "Low"):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid Priority"
+        )
+        
+    task.title = title
+    task.description = description
+    task.priority = priority
+    
+    db.commit()
+    
+    return RedirectResponse("/",status_code=303)
+
+@app.post("/delete/{id}")
+def delete_task(
+    id: int,
+    request: Request,
+    db: Session= Depends(get_db)
+):
+    username = get_username(request)
+    task = get_user_task(id,username,db)
+    
+    db.delete(task)
+    db.commit()
+    
+    return RedirectResponse("/",status_code=303)
+
+@app.get("/set-theme/{theme}")
+def set_theme(
+    request: Request,
+    theme: str
+):
+    get_username(request)
+    
+    if theme not in ("light","dark"):
+        raise HTTPException(
+            status_code=404,
+            detail="Theme Must Be Light Or Dark"
+        )
+        
+    response = RedirectResponse("/",status_code=303)
+    
+    response.set_cookie(
+        key="theme",
+        value=theme,
+        max_age=60 * 60 * 24 * 365,
+        httponly=True,
+        samesite="lax",
+        secure=False
+    )
+    
+    return response
+
+@app.get("/logout")
+def logout_task(request: Request):
+    request.session.clear()
+    
+    return RedirectResponse("/login",status_code=303)
+    
