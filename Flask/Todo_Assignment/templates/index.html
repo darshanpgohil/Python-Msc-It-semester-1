@@ -64,7 +64,13 @@
                         <td>{{ i.title }}</td>
                         <td>{{ i.description }}</td>
                         <td>{{ i.priority }}</td>
-                        <td>{{ i.is_complited }}</td>
+                        <td>
+                            {% if i.is_complited == "True" %}
+                                    <p>Completed</p>
+                            {% else %}
+                                    <p>Pending</p>
+                            {% endif %}
+                        </td>
                         <td>{{ i.due_date.strftime('%d-%m-%Y') }}</td>
                         <td><a href="/toggle/{{ i.id }}">Toggle</a></td>
                         <td>
